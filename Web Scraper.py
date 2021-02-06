@@ -5,13 +5,6 @@ Created on Tue Feb  2 16:25:39 2021
 @author: user
 """
 
-from bs4 import BeautifulSoup
-import requests
-import json
-import re
-import time
-import numpy as np
-
 """Plan:
     1. Obtain seasons pages                       DONE
     2. Obtain all IDs of the competitions         DONE
@@ -19,6 +12,15 @@ import numpy as np
     4. keep all the scores                        DONE
     5. Keep in a grid
 """
+from bs4 import BeautifulSoup
+import requests
+import json
+import re
+import time
+import numpy as np
+ 	
+from multiprocessing import Pool
+
 
 def getIDs(url):
     print("Getting IDs")
@@ -42,15 +44,8 @@ def getIDs(url):
     print("Done.")
     return ID_list
 
-url = "https://www.rugbyleagueproject.org/competitions/super-league/seasons.html"
 
-
-start_time = time.time() 
-ID_list= getIDs(url)
-elapsed_time = time.time() - start_time
-print("Elapsed time of ID search:" , elapsed_time)
-
-def getScores(ID_list):
+def getScores(url):
     print("Obtaining scores")
     headers =  {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
@@ -59,28 +54,42 @@ def getScores(ID_list):
     }
     
     scores_list = []
+    home_scores = []
+    away_scores = []
+    response = requests.get(url, timeout = 10, headers = headers)
+    content = BeautifulSoup(response.content, "html.parser")
+    response.close()
     
-    for ID in ID_list:
-        home_scores = []
-        away_scores = []
-        url = "https://www.rugbyleagueproject.org/competitions/" + ID + '/results.html'
-        response = requests.get(url, timeout = 10, headers = headers)
-        content = BeautifulSoup(response.content, "html.parser")
-        response.close()
-        
-        print(content.find('h1').get_text())
-        scores = content.findAll("td", attrs = {"class":"n"})
-        del scores[2::3] #deletes the number of spectators
-        home_scores = [int(score.text) for score in scores[::2]]
-        away_scores = [int(score.text) for score in scores[1::2]]
-        scores_list.append([home_scores, away_scores])
+    scores = content.findAll("td", attrs = {"class":"n"})
+    del scores[2::3] #deletes the number of spectators
+    home_scores = [int(score.text) for score in scores[::2]]
+    away_scores = [int(score.text) for score in scores[1::2]]
+    scores_list.append([home_scores, away_scores])
     
     return scores_list    
         
-start_time = time.time() 
-scores_list = getScores(ID_list)
-elapsed_time = time.time() - start_time
-print("Elapsed time of score-searching:" , elapsed_time)
+
+if __name__ == '__main__':
+ 
+    url = "https://www.rugbyleagueproject.org/competitions/super-league/seasons.html"
+
+
+    start_time = time.time() 
+    ID_list= getIDs(url)
+    elapsed_time = time.time() - start_time
+    print("Elapsed time of ID search:" , elapsed_time)
+    
+    url_links = ["https://www.rugbyleagueproject.org/competitions/" + ID + '/results.html' for ID in ID_list]
+    
+    #multiprocessing - reduced time taken from 65 seconds to roughly 10 seconds
+    start_time = time.time() 
+    p = Pool(10)
+    scores = p.map(getScores, url_links)
+    p.terminate()
+    p.join()
+    elapsed_time = time.time() - start_time
+    print("Elapsed time of lists:" , elapsed_time)
+    
 
 #first dimension of scores_list = year
 #second dimension = home/away
