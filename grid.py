@@ -29,9 +29,9 @@ def comparison(df):
     df.loc[df["Home"] < df["Away"], ["Home","Away"]] = \
         df.loc[df["Home"] < df["Away"], ["Away", "Home"]].values
     df.columns = ["Winner", "Loser"]
-    table = pd.crosstab(df.Winner, df.Loser)
+    table = pd.crosstab(df.Loser, df.Winner)
     
     Winner = [i for i in range(0, highest_score+1)]
     Loser = [i for i in range(0, highest_score+1)]
-    table = table.reindex(index=Winner, columns=Loser, fill_value=0)
+    table = table.reindex(index=Loser, columns=Winner, fill_value=0)
     return table
