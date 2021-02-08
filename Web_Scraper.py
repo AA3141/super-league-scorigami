@@ -2,7 +2,7 @@
 """
 Created on Tue Feb  2 16:25:39 2021
 
-@author: user
+@author: Amritz
 """
 
 """Plan:
@@ -14,15 +14,10 @@ Created on Tue Feb  2 16:25:39 2021
 """
 from bs4 import BeautifulSoup
 import requests
-import json
 import re
-import time
-import numpy as np
- 	
-from multiprocessing import Pool
 
 
-def getIDs(url):
+def getIDs(url = "https://www.rugbyleagueproject.org/competitions/super-league/seasons.html"):
     print("Getting IDs")
     headers =  {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
@@ -46,7 +41,6 @@ def getIDs(url):
 
 
 def getScores(url):
-    print("Obtaining scores")
     headers =  {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
     "Accept-Encoding": "*",
@@ -69,26 +63,7 @@ def getScores(url):
     return scores_list    
         
 
-if __name__ == '__main__':
- 
-    url = "https://www.rugbyleagueproject.org/competitions/super-league/seasons.html"
 
-
-    start_time = time.time() 
-    ID_list= getIDs(url)
-    elapsed_time = time.time() - start_time
-    print("Elapsed time of ID search:" , elapsed_time)
-    
-    url_links = ["https://www.rugbyleagueproject.org/competitions/" + ID + '/results.html' for ID in ID_list]
-    
-    #multiprocessing - reduced time taken from 65 seconds to roughly 10 seconds
-    start_time = time.time() 
-    p = Pool(10)
-    scores = p.map(getScores, url_links)
-    p.terminate()
-    p.join()
-    elapsed_time = time.time() - start_time
-    print("Elapsed time of lists:" , elapsed_time)
     
 
 #first dimension of scores_list = year
